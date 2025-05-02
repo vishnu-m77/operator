@@ -1,17 +1,23 @@
 import { Dexie, Table } from 'dexie';
-import { Workspace } from '../workspaces';
-import { Interaction } from '../ai/interactions';
+import { WorkspaceRecord } from '../workspaces';
+import { MessageRecord } from '../messages';
+import { SerializedProcess } from '../processes';
+import { Resource } from '@unternet/kernel';
 
 export class IndexedDB extends Dexie {
-  workspaces!: Table<Workspace, string>;
-  interactions!: Table<Interaction, string>;
+  workspaces!: Table<WorkspaceRecord, string>;
+  messages!: Table<MessageRecord, string>;
+  processes!: Table<SerializedProcess, string>;
+  resources!: Table<Resource, string>;
 
   constructor() {
     super('DB');
 
     this.version(1).stores({
       workspaces: 'id',
-      interactions: 'id,workspaceId',
+      messages: 'id,workspaceId,active',
+      processes: 'pid',
+      resources: 'uri',
     });
   }
 }

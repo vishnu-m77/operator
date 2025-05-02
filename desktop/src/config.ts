@@ -14,6 +14,7 @@ export interface ConfigData {
     primaryModel: AIModelDescriptor | null;
     globalHint: string;
   };
+  activeWorkspaceId: string | null;
 }
 
 export const initConfig: ConfigData = {
@@ -22,6 +23,7 @@ export const initConfig: ConfigData = {
     primaryModel: null,
     globalHint: '',
   },
+  activeWorkspaceId: null,
 };
 
 export interface ConfigNotification {
@@ -49,6 +51,11 @@ export class ConfigModel {
     this.notifier.notify();
   }
 
+  updateActiveWorkspaceId(id: string | null) {
+    this.config.activeWorkspaceId = id;
+    this.store.set(this.config);
+  }
+
   updatePrimaryModel(model: AIModelDescriptor) {
     this.config.ai.primaryModel = model;
     this.store.set(this.config);
@@ -58,11 +65,15 @@ export class ConfigModel {
   updateGlobalHint(hint: string) {
     this.config.ai.globalHint = hint;
     this.store.set(this.config);
-    console.log(this.config);
     this.notifier.notify({ type: 'hint' });
   }
 
-  get() {
+  get(): ConfigData;
+  get<K extends keyof ConfigData>(key: K): ConfigData[K];
+  get<K extends keyof ConfigData>(key?: K) {
+    if (key !== undefined) {
+      return this.config[key];
+    }
     return this.config;
   }
 }

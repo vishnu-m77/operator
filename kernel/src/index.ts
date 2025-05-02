@@ -1,11 +1,9 @@
-export {
-  Interpreter,
-  TextResponse,
-  ActionResponse,
-} from './interpreter/interpreter';
-export * from './interpreter/interactions';
-export { Protocol, ProtocolHandler } from './actions/protocols';
-export { Resource } from './actions/resources';
-export { Dispatcher } from './actions/dispatcher';
-export { LanguageModel } from './interpreter/model';
-export { ActionDirective } from './actions/actions';
+export * from './interpreter';
+export * from './interpreter/messages';
+export * from './interpreter/model';
+export * from './runtime/protocols';
+export * from './runtime/resources';
+export * from './runtime';
+export * from './runtime/actions';
+export * from './runtime/processes';
+export * from './response-types';

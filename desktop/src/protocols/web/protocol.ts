@@ -1,22 +1,16 @@
-import Unternet from '@unternet/sdk';
-import { ActionDirective, Protocol } from '@unternet/kernel';
+import { ActionProposal, Protocol } from '@unternet/kernel';
+import { WebProcess } from './processes';
 
-class UnternetProtocol implements Protocol {
-  readonly scheme = 'web';
-  connection = new Unternet({
-    apiKey: import.meta.env.APP_UNTERNET_API_KEY,
-    isDev: import.meta.env.DEV,
-  });
+export class WebProtocol extends Protocol {
+  scheme = ['http', 'https'];
 
-  async handler(directive: ActionDirective) {
-    if (directive.actionId === 'search') {
-      const results = await this.connection.lookup.query({
-        q: directive.args.q,
-      });
-      console.log(results);
-      return results;
-    }
+  handleAction(action: ActionProposal) {
+    console.log(action);
+    return 'The calculator is broken. Tell that to the user!';
   }
 }
 
-export const unternetProtocol = new UnternetProtocol();
+const webProtocol = new WebProtocol();
+webProtocol.registerProcess(WebProcess);
+
+export { webProtocol };

@@ -1,19 +1,24 @@
 import { html, render } from 'lit';
-import { Resource } from '@unternet/kernel';
-// import './resource-picker';
 import './resource-bar.css';
 import { dependencies } from '../../common/dependencies';
 import { ResourceModel } from '../../protocols/resources';
+import { ModalService } from '../../modals/modal-service';
 
 export class ResourceBar extends HTMLElement {
   resourceModel = dependencies.resolve<ResourceModel>('ResourceModel');
+  modalService = dependencies.resolve<ModalService>('ModalService');
+
+  constructor() {
+    super();
+    this.resourceModel.subscribe(() => this.render());
+  }
 
   connectedCallback(): void {
     this.render();
   }
 
   render(): void {
-    const resources = this.resourceModel.resources;
+    const resources = this.resourceModel.all();
 
     const resourceTemplate = resources.map((resource) => {
       return html`<li class="applet-item">
@@ -25,9 +30,11 @@ export class ResourceBar extends HTMLElement {
       </li>`;
     });
 
-    const template = html`<ul class="resources-list">
-      ${resourceTemplate}
-    </ul>`;
+    const template = html`
+      <ul class="resources-list">
+        ${resourceTemplate}
+      </ul>
+    `;
 
     render(template, this);
   }

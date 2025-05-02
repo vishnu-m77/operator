@@ -1,16 +1,15 @@
 import { html, render } from 'lit';
 import { formatTimestamp } from '../../common/utils/index';
-import { Workspace, WorkspaceModel } from '../../workspaces';
+import { WorkspaceRecord, WorkspaceModel } from '../../workspaces';
 import { TabModel } from '../../tabs';
 import { dependencies } from '../../common/dependencies';
-import { Kernel } from '../../ai/kernel';
 import { ModalService } from '../../modals/modal-service';
 import cn from 'classnames';
 import { DisposableGroup } from '../../common/disposable';
 import { ShortcutService } from '../../shortcuts/shortcut-service';
 import './home-page.css';
-import '../common/button';
-import '../common/input';
+import '../common/elements/button';
+import '../common/elements/input';
 
 export class HomePage extends HTMLElement {
   private workspaceModel =
@@ -22,7 +21,7 @@ export class HomePage extends HTMLElement {
   private recentContainer: HTMLUListElement;
   private filterInput: HTMLInputElement;
   private selectedIndex: number = -1;
-  private workspaces: Workspace[] = [];
+  private workspaces: WorkspaceRecord[] = [];
   private disposables = new DisposableGroup();
 
   connectedCallback() {
@@ -112,7 +111,7 @@ export class HomePage extends HTMLElement {
     }
   }
 
-  handleClickDelete(e: PointerEvent, workspaceId: Workspace['id']) {
+  handleClickDelete(e: PointerEvent, workspaceId: WorkspaceRecord['id']) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -238,7 +237,7 @@ export class HomePage extends HTMLElement {
     this.tabModel.create(workspace.id);
   }
 
-  private workspaceTemplate(workspace: Workspace, index: number) {
+  private workspaceTemplate(workspace: WorkspaceRecord, index: number) {
     const className = cn('workspace', {
       selected: index === this.selectedIndex,
     });

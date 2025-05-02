@@ -1,6 +1,6 @@
 import { initTabStoreData, TabModel, TabStoreData } from './tabs';
-import { Interaction } from './ai/interactions';
-import { Workspace, WorkspaceModel } from './workspaces';
+import { MessageRecord } from './messages';
+import { WorkspaceRecord, WorkspaceModel } from './workspaces';
 import { dependencies } from './common/dependencies';
 import { DatabaseService } from './storage/database-service';
 import { KeyStoreService } from './storage/keystore-service';
@@ -13,41 +13,64 @@ import { Kernel } from './ai/kernel';
 import { OpenAIModelProvider } from './ai/providers/openai';
 import { OllamaModelProvider } from './ai/providers/ollama';
 import { AIModelService } from './ai/ai-models';
+import { ResourceModel, initialResources } from './protocols/resources';
+import { protocols } from './protocols/protocols';
 import './ui/common/styles/global.css';
 import './ui/common/styles/reset.css';
 import './ui/common/styles/markdown.css';
 import './modals/global/settings-modal';
 import './ui/app-root';
-import { ResourceModel, initialResources } from './protocols/resources';
-import { protocols } from './protocols/protocols';
+import { ProcessModel, SerializedProcess } from './processes';
+import { ProcessRuntime, Resource } from '@unternet/kernel';
 import './modals/global/bug-modal';
+import './ui/workspaces/workspace-settings-modal';
+import './ui/workspaces/workspace-delete-modal';
 
 /* Initialize databases & stores */
 
-const workspaceDatabaseService = new DatabaseService<string, Workspace>(
+const workspaceDatabaseService = new DatabaseService<string, WorkspaceRecord>(
   'workspaces'
 );
-const interactionDatabaseService = new DatabaseService<string, Interaction>(
-  'interactions'
+const processDatabaseService = new DatabaseService<string, SerializedProcess>(
+  'processes'
+);
+const messageDatabaseService = new DatabaseService<string, MessageRecord>(
+  'messages'
+);
+const resourceDatabaseService = new DatabaseService<string, Resource>(
+  'resources'
 );
 const tabKeyStore = new KeyStoreService<TabStoreData>('tabs', initTabStoreData);
 const configStore = new KeyStoreService<ConfigData>('config', initConfig);
 
+/* Initialize model dependencies */
+
+const runtime = new ProcessRuntime(protocols);
+console.log(runtime.protocols);
+
 /* Initialize models */
+
+const processModel = new ProcessModel(processDatabaseService, runtime);
+dependencies.registerSingleton('ProcessModel', ProcessModel);
+
+const configModel = new ConfigModel(configStore);
+dependencies.registerSingleton('ConfigModel', configModel);
 
 const workspaceModel = new WorkspaceModel(
   workspaceDatabaseService,
-  interactionDatabaseService
+  messageDatabaseService,
+  processModel,
+  configModel
 );
 dependencies.registerSingleton('WorkspaceModel', workspaceModel);
 
 const tabModel = new TabModel(tabKeyStore, workspaceModel);
 dependencies.registerSingleton('TabModel', tabModel);
 
-const configModel = new ConfigModel(configStore);
-dependencies.registerSingleton('ConfigModel', configModel);
-
-const resourceModel = new ResourceModel({ initialResources });
+const resourceModel = new ResourceModel({
+  resourceDatabaseService,
+  initialResources,
+});
 dependencies.registerSingleton('ResourceModel', resourceModel);
 
 /* Initialize kernel & LLMs */
@@ -65,7 +88,7 @@ const kernel = new Kernel({
   configModel,
   aiModelService,
   resourceModel,
-  protocols,
+  runtime,
 });
 dependencies.registerSingleton('Kernel', kernel);
 
@@ -80,13 +103,19 @@ dependencies.registerSingleton('ModalService', modalService);
 /* Register global modals */
 
 modalService.register('settings', {
-  title: 'Settings',
   element: 'settings-modal',
 });
 
 modalService.register('bug', {
-  title: 'Report a bug',
   element: 'bug-modal',
+});
+
+modalService.register('workspace-settings', {
+  element: 'workspace-settings-modal',
+});
+
+modalService.register('workspace-delete', {
+  element: 'workspace-delete-modal',
 });
 
 /* Register keyboard shortcuts */

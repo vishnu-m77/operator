@@ -1,17 +1,18 @@
 import { LitElement, html, css } from 'lit';
-import { InteractionInput } from '../../ai/interactions';
-import '../common/input';
-import '../common/button';
+import { KernelInput } from '../../ai/kernel';
+import '../common/elements/input';
+import '../common/elements/button';
 
-export class CommandSubmitEvent extends CustomEvent<{
-  input: InteractionInput;
-}> {
+export class CommandSubmitEvent extends Event {
+  input: KernelInput;
+
   constructor(value: string) {
     super('submit', {
-      detail: { input: { text: value } },
       bubbles: true,
       composed: true,
     });
+
+    this.input = { text: value };
   }
 }
 
@@ -24,7 +25,7 @@ export class CommandInputElement extends LitElement {
 
   value: string = '';
   disabled: boolean = false;
-  placeholder: string = 'Search or type a command...';
+  placeholder: string = 'Ask a question...';
 
   constructor() {
     super();
@@ -116,7 +117,7 @@ export class CommandInputElement extends LitElement {
 
     un-input {
       width: 100%;
-      margin: 3px;
+      margin: 1px;
     }
 
     un-input::part(input) {
@@ -125,8 +126,8 @@ export class CommandInputElement extends LitElement {
 
     .submit-button {
       position: absolute;
-      right: 6px;
-      top: 6px;
+      right: 4px;
+      top: 4px;
     }
 
     .submit-button::part(button) {

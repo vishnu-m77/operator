@@ -1,6 +1,6 @@
 {
   "name": "@unternet/client",
-  "version": "0.3.4",
+  "version": "0.9.5",
   "description": "Unternet Client",
   "author": {
     "name": "Rupert Manfredi",
@@ -12,13 +12,13 @@
   ],
   "main": "desktop/dist/electron/main.js",
   "build": {
-    "appId": "co.unternet.client",
-    "artifactName": "unternet-client-${version}.${ext}",
-    "productName": "unternet-client",
+    "appId": "co.unternet.undo",
+    "artifactName": "undo-${version}.${ext}",
+    "productName": "Undo",
     "files": [
       "desktop/dist/electron/**/*",
       "desktop/dist/www/**/*",
-      "desktop/src/electron/app-icons/**/*"
+      "desktop/build/app-icons/**/*"
     ],
     "directories": {
       "output": "release"
@@ -33,27 +33,27 @@
       "category": "public.app-category.developer-tools",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
+      "entitlements": "desktop/build/entitlements.mac.plist",
+      "entitlementsInherit": "desktop/build/entitlements.mac.plist",
       "target": [
         "dmg",
         "zip"
       ],
-      "icon": "desktop/src/electron/app-icons/client-icon-macOS.png"
+      "icon": "desktop/build/app-icons/client-icon-macOS.png"
     },
     "afterSign": "desktop/dist/notarize.js",
     "win": {
       "target": [
         "nsis"
       ],
-      "icon": "desktop/src/electron/app-icons/client-icon-windows.ico"
+      "icon": "desktop/build/electron/app-icons/client-icon-windows.ico"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
       "category": "Development",
-      "icon": "desktop/src/electron/app-icons"
+      "icon": "desktop/build/electron/app-icons"
     }
   },
   "scripts": {
@@ -61,6 +61,7 @@
     "build": "npm run build:kernel && npm run build:desktop",
     "build:desktop": "cd desktop && rimraf dist && cross-env NODE_ENV=production npm run build",
     "build:kernel": "cd kernel && npm run build",
+    "release": "npm run sync-version && git add . && git commit --message 'release' && git push --tags",
     "clean": "rimraf desktop/dist && rimraf kernel/dist && rm -rf dist",
     "dev": "npm run dev:desktop",
     "dev:desktop": "cd desktop && npm run dev",
@@ -95,6 +96,9 @@
     "electron-updater": "^6.6.2",
     "glob": "^11.0.1",
     "lit-markdown": "^1.3.2"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.9.5"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
