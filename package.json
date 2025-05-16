@@ -1,6 +1,6 @@
 {
   "name": "@unternet/client",
-  "version": "0.9.6",
+  "version": "0.10.3",
   "description": "Unternet Client",
   "author": {
     "name": "Rupert Manfredi",
@@ -69,8 +69,8 @@
     "package:desktop": "cd desktop && npm run package",
     "package:electron": "npm run package:all",
     "package:all": "electron-builder -mwl",
-    "package:mac": "electron-builder --mac",
-    "package:win": "electron-builder --win",
+    "package:mac": "electron-builder --mac --universal",
+    "package:win": "electron-builder --win --x64 --ia32",
     "package:linux": "electron-builder --linux",
     "app:dir": "rm -rf dist && electron-builder --dir",
     "app:dist": "rm -rf dist && electron-builder",

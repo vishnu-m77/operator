@@ -1,24 +1,42 @@
 import dedent from 'dedent';
-import { ActionDefinition } from '../runtime/resources';
+import { ActionDefinition } from '../runtime/actions';
+import { flags } from './flags';
 import { Strategy } from './strategies';
 
 function chooseStrategy(strategies: Record<string, Strategy>) {
   const possibleOutputs = Object.keys(strategies)
     .map((x) => `"${x}"`)
-    .join(' or ');
+    .join('|');
+  const descriptions = JSON.stringify(strategies);
   return dedent`
-    Choose from one of the following strategies to use in order to best respond to the user's query. (This is not your actual response, but will determine the type of response you give).
-    Possible strategies:
-    ${JSON.stringify(strategies)}
-    Respond with only one of the following strings: ${possibleOutputs}
+    Choose from one of the following available strategies to use in order to best respond to the user's query. (This is not your actual response, but will determine the type of response you give).
+    Available strategies are listed below in a discriminated union format with the name Strategy.
+    \`\`\`
+    type Strategy = ${possibleOutputs};
+    \`\`\`
+    Be sure to look at the name and description of each strategy.
+    Here is a JSON object that maps each strategy to its associated description:
+    \`\`\`
+    ${descriptions}
+    \`\`\`
+    Your response should take the form of a JSON object that adheres to this interface:
+    \`\`\`
+    interface Response {
+      strategy: Strategy;
+    };
+    \`\`\`
+    Where the response is an object with key "strategy" and the value is one of the allowed strings in the discriminated union given previously.
+    Respond with the strategy you think is best for the user query in the JSON format mentioned above.
   `;
 }
 
 function chooseAction() {
   return dedent`
     Choose one or more tools from the given tool options that can help resolve the user's query, and fill out the appropriate parameters if any. Your response should take the form of a JSON object that adheres to this interface:
-    { tools: Array<{ id: string; args?: any; }> }
+    { tools: Array<{ id: string; display: string; args?: any; }> }
     Where the "id" should be contain the selected action's key, and "args" is an optional object that corresponds to the required params_schema if present.
+    \`display\` can be one of the following values:
+    ${flags.display}
   `;
 }
 
@@ -41,7 +59,7 @@ interface SystemInit {
 function system({ actions, hint }: SystemInit) {
   let prompt = '';
 
-  prompt += `You are a helpful assistant. In responding to the user, you can use a tool or respond directly, or some combination of both. If your responses refer to information with links, be sure to cite them using links in the natural flow of text.\n\n`;
+  prompt += `You are a helpful assistant. In responding to the user, you can use a tool or respond directly, or some combination of both. If your responses refer to information with links, be sure to cite them using links in the natural flow of text. If not clear otherwise, use actions to perform a search in response to queries.\n\n`;
 
   if (actions) {
     prompt += dedent`

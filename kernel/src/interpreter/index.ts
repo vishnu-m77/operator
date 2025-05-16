@@ -8,8 +8,14 @@ import {
 import defaultPrompts, { InterpreterPrompts } from './prompts';
 import { actionChoiceSchema, schemas } from './schemas';
 import { defaultStrategies, Strategy } from './strategies';
-import { createActionDict, decodeActionHandle } from '../runtime/actions';
-import { ActionDefinition, Resource } from '../runtime/resources';
+import {
+  createActionDict,
+  decodeActionHandle,
+  encodeActionHandle,
+  ProcessDisplayMode,
+} from '../runtime/actions';
+import { Resource } from '../runtime/resources';
+import { ActionDefinition } from '../runtime/actions';
 import { KernelMessage, modelMsg, toModelMessages } from './messages';
 import {
   actionProposalResponse,
@@ -32,6 +38,10 @@ interface GenerateOpts<T = unknown> {
   schema?: Schema<T>;
   system?: string;
   think?: true;
+}
+
+interface ActionGenerationOpts {
+  display: ProcessDisplayMode;
 }
 
 export class Interpreter {
@@ -118,9 +128,10 @@ export class Interpreter {
   }
 
   async generateActionResponse(
-    messages: Array<KernelMessage>
+    messages: Array<KernelMessage>,
+    opts?: ActionGenerationOpts
   ): Promise<ActionProposalResponse> {
-    const responses = await this.generateActionResponses(messages);
+    const responses = await this.generateActionResponses(messages, opts);
     return responses[0];
   }
 
@@ -130,7 +141,8 @@ export class Interpreter {
    * @returns An ActionResponse containing the action proposal.
    */
   async generateActionResponses(
-    messages: Array<KernelMessage>
+    messages: Array<KernelMessage>,
+    opts?: ActionGenerationOpts
   ): Promise<ActionProposalResponse[]> {
     const { tools } = await this.generateObject({
       messages,
@@ -141,11 +153,30 @@ export class Interpreter {
 
     return tools.map((tool) => {
       const { uri, actionId } = decodeActionHandle(tool.id);
-      return actionProposalResponse({
+
+      let action: ActionDefinition;
+      try {
+        action = this.actions[tool.id];
+      } catch {
+        throw new Error('Action returned is not a valid action ID.');
+      }
+
+      let display: ProcessDisplayMode;
+      if (action.display && action.display !== 'auto') {
+        display = action.display;
+      } else {
+        display = opts?.display ?? tool.display;
+      }
+
+      const response = actionProposalResponse({
         uri,
         actionId,
         args: tool.args,
+        display: display,
       });
+
+      console.log('[INTERPRETER] Action proposal: ', response);
+      return response;
     });
   }
 
@@ -218,6 +249,7 @@ export class Interpreter {
         system,
         prompt: this.prompts.think(prompt),
       });
+      console.log('[INTERPRETER] Thought: ', thought);
       modelMsgs.push(modelMsg('assistant', thought));
     }
     if (prompt) modelMsgs.push(modelMsg('user', prompt));
@@ -238,5 +270,9 @@ export class Interpreter {
 
   updateResources(resources: Array<Resource> = []) {
     this.actions = createActionDict(resources);
+  }
+
+  private findAction(uri: string, actionId: string) {
+    return this.actions[encodeActionHandle(uri, actionId)];
   }
 }

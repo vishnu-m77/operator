@@ -1,6 +1,6 @@
 {
   "name": "@unternet/kernel",
-  "version": "0.9.6",
+  "version": "0.10.3",
   "description": "",
   "license": "ISC",
   "author": "",
@@ -19,7 +19,6 @@
   },
   "imports": {
     "#src/*": "./src/*",
-    "#tests/tooling": "./tests/common/tooling.ts",
     "#tests/*": "./tests/*"
   },
   "dependencies": {
@@ -33,7 +32,9 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@types/untildify": "^4.0.0",
     "chokidar-cli": "^3.0.0",
+    "dotenv": "^16.5.0",
     "mime-types": "^3.0.1",
     "rimraf": "^6.0.1",
     "typedoc": "^0.28.2",

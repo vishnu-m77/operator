@@ -8,12 +8,14 @@ import {
   KernelResponse,
   DirectResponse,
   ActionProposalResponse,
+  ProcessContainer,
 } from '@unternet/kernel';
-import { WorkspaceRecord, WorkspaceModel } from '../workspaces';
-import { ConfigModel, ConfigNotification } from '../config';
+import { WorkspaceRecord, WorkspaceModel } from '../models/workspace-model';
+import { ConfigModel, ConfigNotification } from '../models/config-model';
 import { AIModelService } from './ai-models';
-import { ResourceModel } from '../protocols/resources';
+import { ResourceModel } from '../models/resource-model';
 import { Notifier } from '../common/notifier';
+import { ProcessModel } from '../models/process-model';
 
 export interface KernelInit {
   model?: LanguageModel;
@@ -22,6 +24,7 @@ export interface KernelInit {
   aiModelService: AIModelService;
   resourceModel: ResourceModel;
   runtime: ProcessRuntime;
+  processModel: ProcessModel;
 }
 
 export interface KernelInput {
@@ -44,6 +47,7 @@ export class Kernel {
   runtime: ProcessRuntime;
   workspaceModel: WorkspaceModel;
   configModel: ConfigModel;
+  processModel: ProcessModel;
   resourceModel: ResourceModel;
   aiModelService: AIModelService;
   status: KernelStatus;
@@ -55,6 +59,7 @@ export class Kernel {
     configModel,
     aiModelService,
     resourceModel,
+    processModel,
     runtime,
   }: KernelInit) {
     this.workspaceModel = workspaceModel;
@@ -62,6 +67,7 @@ export class Kernel {
     this.aiModelService = aiModelService;
     this.resourceModel = resourceModel;
     this.runtime = runtime;
+    this.processModel = processModel;
 
     this.initialize();
 
@@ -97,7 +103,6 @@ export class Kernel {
 
   updateResources() {
     const resources = this.resourceModel.all();
-    console.log('updating res', resources);
     this.interpreter.updateResources(resources);
   }
 
@@ -122,8 +127,6 @@ export class Kernel {
         'Tried to access kernel when not initialized.'
       );
     }
-
-    this.updateStatus('thinking');
 
     const runner = this.interpreter.run(
       this.workspaceModel.get(workspaceId).activeMessages
@@ -172,12 +175,15 @@ export class Kernel {
     proposal: ActionProposalResponse
   ) {
     const { process, content } = await this.runtime.dispatch(proposal);
+    let container: ProcessContainer;
+    if (process) container = this.processModel.create(process, workspaceId);
 
     const message = actionMessage({
       uri: proposal.uri,
       actionId: proposal.actionId,
       args: proposal.args,
-      process,
+      process: container,
+      display: proposal.display,
       content,
     });
 

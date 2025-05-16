@@ -1,4 +1,4 @@
-import { Resource } from '@unternet/kernel';
+import { ActionDict, ResourceIcon } from '@unternet/kernel';
 
 export function uriWithScheme(
   url: string,
@@ -14,17 +14,28 @@ export function uriWithScheme(
   }
 }
 
-export async function getMetadata(url: string): Promise<Partial<Resource>> {
-  let metadata = {} as Partial<Resource>;
+interface WebsiteMetadata {
+  title: string;
+  name: string;
+  short_name: string;
+  description: string;
+  icons: ResourceIcon[];
+  actions: ActionDict;
+}
+
+export async function getMetadata(url: string): Promise<WebsiteMetadata> {
+  let metadata = {} as WebsiteMetadata;
 
   url = new URL(url).href;
-  // TODO: Allow importer of kernel to specify fetch function, i.e. use a proxy
+
   const html = await system.fetch(url);
   const parser = new DOMParser();
   const dom = parser.parseFromString(html, 'text/html');
   const manifestLink = dom.querySelector(
     'link[rel="manifest"]'
   ) as HTMLLinkElement;
+
+  metadata.title = dom.querySelector('title')?.innerText;
 
   if (manifestLink) {
     const baseUrl = new URL(url).origin;
@@ -36,7 +47,7 @@ export async function getMetadata(url: string): Promise<Partial<Resource>> {
       metadata = manifest;
       if (manifest.icons) {
         metadata.icons = manifest.icons.map((icon) => {
-          icon.src = new URL(icon.src, manifestUrl).href;
+          icon.src = new URL(`../${icon.src}`, manifestUrl).href;
           return icon;
         });
       }
@@ -69,6 +80,10 @@ export async function getMetadata(url: string): Promise<Partial<Resource>> {
     metadata.description = dom
       .querySelector('meta[name="description"]')
       ?.getAttribute('content');
+  }
+
+  if (!metadata.title) {
+    metadata.title = metadata.name;
   }
 
   return metadata;
